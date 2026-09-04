@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysOperationLogMapper">
+
+    <sql id="logConditions">
+        deleted = 0
+        <if test="module != null and module != ''">
+            AND module LIKE CONCAT('%', #{module}, '%')
+        </if>
+        <if test="operator != null and operator != ''">
+            AND operator_username LIKE CONCAT('%', #{operator}, '%')
+        </if>
+        <if test="operationType != null and operationType != ''">
+            AND operation_type = #{operationType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND operated_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND operated_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
+        </if>
+    </sql>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM sys_operation_log
+        <where>
+            <include refid="logConditions"/>
+        </where>
+    </select>
+
+    <select id="list" resultType="map">
+        SELECT id, trace_id AS traceId, module, operation_type AS operationType, description,
+               operator_username AS operatorUsername, request_method AS requestMethod, request_url AS requestUrl,
+               request_params AS requestParams, response_result AS responseResult, ip_address AS ipAddress,
+               status, error_message AS errorMessage, duration_ms AS durationMs, operated_at AS operatedAt
+        FROM sys_operation_log
+        <where>
+            <include refid="logConditions"/>
+        </where>
+        ORDER BY operated_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="export" resultType="map">
+        SELECT module, operation_type, description, operator_username, request_url, request_params,
+               response_result, ip_address, status, error_message, duration_ms, operated_at
+        FROM sys_operation_log
+        <where>
+            <include refid="logConditions"/>
+        </where>
+        ORDER BY operated_at DESC
+        LIMIT 10000
+    </select>
+
+    <update id="deleteByIds">
+        UPDATE sys_operation_log SET deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

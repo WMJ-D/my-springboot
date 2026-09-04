@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysUserSessionMapper">
+
+    <sql id="onlineConditions">
+        s.status = 'ACTIVE'
+        AND s.expires_at &gt; CURRENT_TIMESTAMP(3)
+        AND s.last_active_at &gt;= DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 5 MINUTE)
+        <if test="username != null and username != ''">
+            AND s.username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="ipAddress != null and ipAddress != ''">
+            AND s.ip_address LIKE CONCAT('%', #{ipAddress}, '%')
+        </if>
+    </sql>
+
+    <select id="countOnline" resultType="long">
+        SELECT COUNT(*) FROM sys_user_session s
+        <where>
+            <include refid="onlineConditions"/>
+        </where>
+    </select>
+
+    <select id="listOnline" resultType="map">
+        SELECT s.session_id AS sessionId, s.user_id AS userId, s.username, u.nickname,
+               o.org_name AS orgName, s.ip_address AS ipAddress, s.location, s.browser, s.os,
+               s.login_at AS loginAt, s.last_active_at AS lastActiveAt,
+               TIMESTAMPDIFF(SECOND, s.login_at, CURRENT_TIMESTAMP(3)) AS onlineDurationSeconds
+        FROM sys_user_session s
+        JOIN sys_user u ON u.id = s.user_id AND u.deleted = 0
+        LEFT JOIN sys_org o ON o.id = u.org_id AND o.deleted = 0
+        <where>
+            <include refid="onlineConditions"/>
+        </where>
+        ORDER BY s.last_active_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <update id="batchKick">
+        UPDATE sys_user_session
+        SET status = 'KICKED', kicked_by = #{kickedBy}, kicked_at = CURRENT_TIMESTAMP(3), kick_reason = #{reason}
+        WHERE session_id IN
+        <foreach collection="sessionIds" item="sessionId" open="(" close=")" separator=",">
+            #{sessionId}
+        </foreach>
+        AND status = 'ACTIVE'
+    </update>
+
+</mapper>

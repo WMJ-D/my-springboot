@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysLoginLogMapper">
+
+    <sql id="loginConditions">
+        deleted = 0
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="ipAddress != null and ipAddress != ''">
+            AND ip_address LIKE CONCAT('%', #{ipAddress}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND login_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND login_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
+        </if>
+    </sql>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM sys_login_log
+        <where>
+            <include refid="loginConditions"/>
+        </where>
+    </select>
+
+    <select id="list" resultType="map">
+        SELECT id, username, ip_address AS ipAddress, location, browser, os,
+               login_type AS loginType, status, message, login_at AS loginAt
+        FROM sys_login_log
+        <where>
+            <include refid="loginConditions"/>
+        </where>
+        ORDER BY login_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="export" resultType="map">
+        SELECT username, ip_address, location, browser, os, status, message, login_at
+        FROM sys_login_log
+        <where>
+            <include refid="loginConditions"/>
+        </where>
+        ORDER BY login_at DESC
+        LIMIT 10000
+    </select>
+
+    <update id="deleteByIds">
+        UPDATE sys_login_log SET deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

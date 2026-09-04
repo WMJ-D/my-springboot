@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysMenuMapper">
+
+    <select id="list" resultType="map">
+        SELECT id, parent_id AS parentId, menu_name AS menuName, menu_type AS menuType,
+               path, component, route_name AS routeName, permission, icon, sort_order AS sort,
+               visible, status, keep_alive AS keepAlive, external_link AS externalLink,
+               remark, created_at AS createdAt, created_at AS createTime
+        FROM sys_menu
+        <where>
+            deleted = 0
+            <if test="menuName != null and menuName != ''">
+                AND menu_name LIKE CONCAT('%', #{menuName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY sort_order, id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_menu
+        (parent_id, menu_name, menu_type, path, component, route_name, permission, icon,
+         sort_order, visible, status, keep_alive, external_link, remark, created_by, updated_by)
+        VALUES
+        (#{parentId}, #{menuName}, #{menuType}, #{path}, #{component}, #{routeName}, #{permission}, #{icon},
+         #{sort}, #{visible}, #{status}, #{keepAlive}, #{externalLink}, #{remark}, #{createdBy}, #{updatedBy})
+    </insert>
+
+</mapper>

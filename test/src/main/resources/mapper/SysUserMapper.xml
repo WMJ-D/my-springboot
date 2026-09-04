@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysUserMapper">
+
+    <sql id="userConditions">
+        u.deleted = 0
+        <if test="username != null and username != ''">
+            AND u.username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="phone != null and phone != ''">
+            AND u.phone LIKE CONCAT('%', #{phone}, '%')
+        </if>
+        <if test="status != null">
+            AND u.status = #{status}
+        </if>
+        <if test="orgId != null">
+            AND u.org_id = #{orgId}
+        </if>
+    </sql>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(DISTINCT u.id) FROM sys_user u
+        <where>
+            <include refid="userConditions"/>
+        </where>
+    </select>
+
+    <select id="list" resultType="map">
+        SELECT u.id, u.username, u.nickname, u.phone, u.email, u.avatar_url AS avatarUrl,
+               u.org_id AS orgId, o.org_name AS orgName, u.status,
+               u.last_login_at AS lastLoginAt, u.created_at AS createdAt, u.created_at AS createTime,
+               GROUP_CONCAT(DISTINCT r.id ORDER BY r.id) AS roleIds,
+               GROUP_CONCAT(DISTINCT r.role_name ORDER BY r.sort_order SEPARATOR ',') AS roleName
+        FROM sys_user u
+        LEFT JOIN sys_org o ON o.id = u.org_id AND o.deleted = 0
+        LEFT JOIN sys_user_role ur ON ur.user_id = u.id
+        LEFT JOIN sys_role r ON r.id = ur.role_id AND r.deleted = 0
+        <where>
+            <include refid="userConditions"/>
+        </where>
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user
+        (org_id, username, password_hash, nickname, phone, email, status, password_updated_at, created_by, updated_by)
+        VALUES
+        (#{orgId}, #{username}, #{passwordHash}, #{nickname}, #{phone}, #{email}, #{status},
+         CURRENT_TIMESTAMP(3), #{createdBy}, #{updatedBy})
+    </insert>
+
+    <insert id="insertUserRoles">
+        INSERT INTO sys_user_role (user_id, role_id) VALUES
+        <foreach collection="roleIds" item="roleId" separator=",">
+            (#{userId}, #{roleId})
+        </foreach>
+    </insert>
+
+    <update id="softDeleteByIds">
+        UPDATE sys_user SET deleted = 1, updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

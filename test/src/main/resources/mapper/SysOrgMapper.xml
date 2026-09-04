@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysOrgMapper">
+
+    <select id="list" resultType="map">
+        SELECT id, parent_id AS parentId, ancestors, org_name AS orgName, org_code AS orgCode,
+               leader, phone, email, sort_order AS sort, status,
+               created_at AS createdAt, created_at AS createTime
+        FROM sys_org
+        <where>
+            deleted = 0
+            <if test="orgName != null and orgName != ''">
+                AND org_name LIKE CONCAT('%', #{orgName}, '%')
+            </if>
+        </where>
+        ORDER BY sort_order, id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_org
+        (parent_id, ancestors, org_name, org_code, leader, phone, email, sort_order, status, created_by, updated_by)
+        VALUES
+        (#{parentId}, #{ancestors}, #{orgName}, #{orgCode}, #{leader}, #{phone}, #{email}, #{sort}, #{status},
+         #{createdBy}, #{updatedBy})
+    </insert>
+
+</mapper>

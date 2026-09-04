@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysParamMapper">
+
+    <sql id="paramConditions">
+        deleted = 0
+        <if test="paramName != null and paramName != ''">
+            AND param_name LIKE CONCAT('%', #{paramName}, '%')
+        </if>
+        <if test="paramKey != null and paramKey != ''">
+            AND param_key LIKE CONCAT('%', #{paramKey}, '%')
+        </if>
+        <if test="paramType != null and paramType != ''">
+            AND param_type = #{paramType}
+        </if>
+    </sql>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM sys_param
+        <where>
+            <include refid="paramConditions"/>
+        </where>
+    </select>
+
+    <select id="list" resultType="map">
+        SELECT id, param_name AS paramName, param_key AS paramKey, param_value AS paramValue,
+               param_type AS paramType, value_type AS valueType, remark,
+               created_at AS createdAt, created_at AS createTime
+        FROM sys_param
+        <where>
+            <include refid="paramConditions"/>
+        </where>
+        ORDER BY id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_param (param_name, param_key, param_value, param_type, value_type, remark, created_by, updated_by)
+        VALUES (#{paramName}, #{paramKey}, #{paramValue}, #{paramType}, #{valueType}, #{remark}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="softDeleteByIds">
+        UPDATE sys_param SET deleted = 1, updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>
