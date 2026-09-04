@@ -39,6 +39,7 @@ public class MenuController {
 
     public record MenuBody(
             Long parentId,
+            @Size(max = 64) String appId,
             @NotBlank(message = "菜单名称不能为空") @Size(max = 100) String menuName,
             @NotEmpty(message = "菜单类型不能为空") @Pattern(regexp = "[MCF]", message = "菜单类型必须是 M/C/F") String menuType,
             @Size(max = 255) String path,
@@ -105,9 +106,9 @@ public class MenuController {
     }
 
     private static MenuService.MenuInput toInput(MenuBody body) {
-        return new MenuService.MenuInput(body.parentId(), body.menuName().trim(), body.menuType(), body.path(),
-                body.component(), body.routeName(), body.permission(), body.icon(), body.sort(), body.visible(),
-                body.status(), body.keepAlive(), body.externalLink(), body.remark());
+        return new MenuService.MenuInput(body.parentId(), body.appId(), body.menuName().trim(), body.menuType(),
+                body.path(), body.component(), body.routeName(), body.permission(), body.icon(), body.sort(),
+                body.visible(), body.status(), body.keepAlive(), body.externalLink(), body.remark());
     }
 
     private static String trimToNull(String value) {

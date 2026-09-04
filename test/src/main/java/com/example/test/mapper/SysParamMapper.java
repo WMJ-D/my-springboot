@@ -2,6 +2,7 @@ package com.example.test.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public interface SysParamMapper {
 
     List<Map<String, Object>> list(@Param("paramName") String paramName, @Param("paramKey") String paramKey,
                                    @Param("paramType") String paramType, @Param("limit") int limit, @Param("offset") int offset);
+
+    @Select("SELECT param_value FROM sys_param WHERE param_key=#{paramKey} AND deleted=0 LIMIT 1")
+    String findValueByKey(@Param("paramKey") String paramKey);
 
     /**
      * 新增参数，自增主键回写到 params.id

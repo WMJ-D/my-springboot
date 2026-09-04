@@ -24,15 +24,16 @@ public interface SysUserSessionMapper {
     Map<String, Object> findStatusAndExpires(@Param("sessionId") String sessionId, @Param("userId") long userId);
 
     /**
-     * 登录成功后写入会话
+     * 登录成功后写入会话（记录所属子系统）
      */
     @Insert("""
             INSERT INTO sys_user_session
-            (session_id, user_id, username, ip_address, browser, os, user_agent, expires_at)
-            VALUES (#{sessionId}, #{userId}, #{username}, #{ipAddress}, #{browser}, #{os}, #{userAgent}, #{expiresAt})
+            (session_id, app_id, user_id, username, ip_address, browser, os, user_agent, expires_at)
+            VALUES (#{sessionId}, #{appId}, #{userId}, #{username}, #{ipAddress}, #{browser}, #{os}, #{userAgent}, #{expiresAt})
             """)
-    int insertSession(@Param("sessionId") String sessionId, @Param("userId") long userId, @Param("username") String username,
-                      @Param("ipAddress") String ipAddress, @Param("browser") String browser, @Param("os") String os,
+    int insertSession(@Param("sessionId") String sessionId, @Param("appId") String appId, @Param("userId") long userId,
+                      @Param("username") String username, @Param("ipAddress") String ipAddress,
+                      @Param("browser") String browser, @Param("os") String os,
                       @Param("userAgent") String userAgent, @Param("expiresAt") LocalDateTime expiresAt);
 
     /**
@@ -86,13 +87,14 @@ public interface SysUserSessionMapper {
     int removeStale();
 
     /**
-     * 在线用户分页统计
+     * 在线用户分页统计（支持按所属子系统筛选）
      */
-    long countOnline(@Param("username") String username, @Param("ipAddress") String ipAddress);
+    long countOnline(@Param("appId") String appId, @Param("username") String username, @Param("ipAddress") String ipAddress);
 
     /**
-     * 在线用户分页列表
+     * 在线用户分页列表（返回所属系统名称）
      */
-    List<Map<String, Object>> listOnline(@Param("username") String username, @Param("ipAddress") String ipAddress,
+    List<Map<String, Object>> listOnline(@Param("appId") String appId, @Param("username") String username,
+                                          @Param("ipAddress") String ipAddress,
                                           @Param("pageSize") int pageSize, @Param("offset") int offset);
 }

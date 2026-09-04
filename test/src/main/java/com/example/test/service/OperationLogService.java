@@ -26,10 +26,10 @@ public class OperationLogService {
         this.operationLogMapper = operationLogMapper;
     }
 
-    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String module, String operator,
+    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String appId, String module, String operator,
                                                 String operationType, Integer status, String startTime, String endTime) {
-        long total = operationLogMapper.count(module, operator, operationType, status, startTime, endTime);
-        List<Map<String, Object>> rows = operationLogMapper.list(module, operator, operationType, status,
+        long total = operationLogMapper.count(appId, module, operator, operationType, status, startTime, endTime);
+        List<Map<String, Object>> rows = operationLogMapper.list(appId, module, operator, operationType, status,
                 startTime, endTime, pageQuery.getPageSize(), pageQuery.getOffset());
         return new PageResult<>(rows.stream().map(OperationLogService::transform).toList(),
                 total, pageQuery.getPageNum(), pageQuery.getPageSize());
@@ -39,9 +39,9 @@ public class OperationLogService {
         operationLogMapper.deleteByIds(ids);
     }
 
-    public List<Map<String, Object>> export(String module, String operator, String operationType,
+    public List<Map<String, Object>> export(String appId, String module, String operator, String operationType,
                                             Integer status, String startTime, String endTime) {
-        List<Map<String, Object>> rows = operationLogMapper.export(module, operator, operationType,
+        List<Map<String, Object>> rows = operationLogMapper.export(appId, module, operator, operationType,
                 status, startTime, endTime);
         return rows.stream().map(row -> {
             Map<String, Object> item = new LinkedHashMap<>(row);

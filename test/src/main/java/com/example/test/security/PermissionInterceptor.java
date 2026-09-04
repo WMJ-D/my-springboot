@@ -38,7 +38,8 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (user.isAdmin()) {
             return true;
         }
-        Set<String> granted = new HashSet<>(authMapper.findPermissions(user.userId()));
+        Set<String> granted = new HashSet<>(authMapper.findPermissions(user.userId(),
+                SecurityUtils.getAppId(request)));
         if (Arrays.stream(annotation.value()).noneMatch(granted::contains)) {
             throw new AppException(403, "无权执行此操作", "FORBIDDEN");
         }

@@ -5,55 +5,62 @@
 <mapper namespace="com.example.test.mapper.SysOperationLogMapper">
 
     <sql id="logConditions">
-        deleted = 0
+        l.deleted = 0
+        <if test="appId != null and appId != ''">
+            AND l.app_id = #{appId}
+        </if>
         <if test="module != null and module != ''">
-            AND module LIKE CONCAT('%', #{module}, '%')
+            AND l.module LIKE CONCAT('%', #{module}, '%')
         </if>
         <if test="operator != null and operator != ''">
-            AND operator_username LIKE CONCAT('%', #{operator}, '%')
+            AND l.operator_username LIKE CONCAT('%', #{operator}, '%')
         </if>
         <if test="operationType != null and operationType != ''">
-            AND operation_type = #{operationType}
+            AND l.operation_type = #{operationType}
         </if>
         <if test="status != null">
-            AND status = #{status}
+            AND l.status = #{status}
         </if>
         <if test="startTime != null and startTime != ''">
-            AND operated_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
+            AND l.operated_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
         </if>
         <if test="endTime != null and endTime != ''">
-            AND operated_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
+            AND l.operated_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
         </if>
     </sql>
 
     <select id="count" resultType="long">
-        SELECT COUNT(*) FROM sys_operation_log
+        SELECT COUNT(*) FROM sys_operation_log l
         <where>
             <include refid="logConditions"/>
         </where>
     </select>
 
     <select id="list" resultType="map">
-        SELECT id, trace_id AS traceId, module, operation_type AS operationType, description,
-               operator_username AS operatorUsername, request_method AS requestMethod, request_url AS requestUrl,
-               request_params AS requestParams, response_result AS responseResult, ip_address AS ipAddress,
-               status, error_message AS errorMessage, duration_ms AS durationMs, operated_at AS operatedAt
-        FROM sys_operation_log
+        SELECT l.id, l.trace_id AS traceId, l.app_id AS appId, a.app_name AS appName, l.module,
+               l.operation_type AS operationType, l.description,
+               l.operator_username AS operatorUsername, l.request_method AS requestMethod, l.request_url AS requestUrl,
+               l.request_params AS requestParams, l.response_result AS responseResult, l.ip_address AS ipAddress,
+               l.status, l.error_message AS errorMessage, l.duration_ms AS durationMs, l.operated_at AS operatedAt
+        FROM sys_operation_log l
+        LEFT JOIN sys_app a ON a.app_id = l.app_id AND a.deleted = 0
         <where>
             <include refid="logConditions"/>
         </where>
-        ORDER BY operated_at DESC
+        ORDER BY l.operated_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="export" resultType="map">
-        SELECT module, operation_type, description, operator_username, request_url, request_params,
-               response_result, ip_address, status, error_message, duration_ms, operated_at
-        FROM sys_operation_log
+        SELECT l.app_id AS appId, a.app_name AS appName, l.module, l.operation_type, l.description,
+               l.operator_username, l.request_url, l.request_params,
+               l.response_result, l.ip_address, l.status, l.error_message, l.duration_ms, l.operated_at
+        FROM sys_operation_log l
+        LEFT JOIN sys_app a ON a.app_id = l.app_id AND a.deleted = 0
         <where>
             <include refid="logConditions"/>
         </where>
-        ORDER BY operated_at DESC
+        ORDER BY l.operated_at DESC
         LIMIT 10000
     </select>
 

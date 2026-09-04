@@ -41,6 +41,7 @@ public class LoginLogController {
     @RequirePermission("log:login:list")
     public ApiResponse<PageResult<Map<String, Object>>> list(@RequestParam(required = false) Integer pageNum,
                                                              @RequestParam(required = false) Integer pageSize,
+                                                             @RequestParam(required = false) String appId,
                                                              @RequestParam(required = false) String username,
                                                              @RequestParam(required = false) String ip,
                                                              @RequestParam(required = false) String ipAddress,
@@ -49,7 +50,7 @@ public class LoginLogController {
                                                              @RequestParam(required = false) String startDate,
                                                              @RequestParam(required = false) String endDate) {
         String[] range = QueryUtils.parseDateRange(dateRange, startDate, endDate);
-        return ApiResponse.ok(loginLogService.list(PageQuery.of(pageNum, pageSize), username,
+        return ApiResponse.ok(loginLogService.list(PageQuery.of(pageNum, pageSize), appId, username,
                 ip != null && !ip.isBlank() ? ip : ipAddress,
                 QueryUtils.parseStatus(status), range[0], range[1]));
     }
@@ -70,6 +71,7 @@ public class LoginLogController {
     @GetMapping("/export")
     @RequirePermission("log:login:export")
     public void export(HttpServletResponse response,
+                       @RequestParam(required = false) String appId,
                        @RequestParam(required = false) String username,
                        @RequestParam(required = false) String ip,
                        @RequestParam(required = false) String ipAddress,
@@ -78,11 +80,12 @@ public class LoginLogController {
                        @RequestParam(required = false) String startDate,
                        @RequestParam(required = false) String endDate) throws IOException {
         String[] range = QueryUtils.parseDateRange(dateRange, startDate, endDate);
-        List<Map<String, Object>> rows = loginLogService.export(username,
+        List<Map<String, Object>> rows = loginLogService.export(appId, username,
                 ip != null && !ip.isBlank() ? ip : ipAddress,
                 QueryUtils.parseStatus(status), range[0], range[1]);
         List<CsvColumn> columns = List.of(
-                new CsvColumn("username", "用户名"), new CsvColumn("ip_address", "登录IP"),
+                new CsvColumn("appName", "所属系统"), new CsvColumn("username", "用户名"),
+                new CsvColumn("ip_address", "登录IP"),
                 new CsvColumn("location", "登录地点"), new CsvColumn("browser", "浏览器"),
                 new CsvColumn("os", "操作系统"), new CsvColumn("statusText", "状态"),
                 new CsvColumn("message", "提示信息"), new CsvColumn("login_at", "登录时间"));

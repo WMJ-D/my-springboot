@@ -8,6 +8,9 @@
         s.status = 'ACTIVE'
         AND s.expires_at &gt; CURRENT_TIMESTAMP(3)
         AND s.last_active_at &gt;= DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 5 MINUTE)
+        <if test="appId != null and appId != ''">
+            AND s.app_id = #{appId}
+        </if>
         <if test="username != null and username != ''">
             AND s.username LIKE CONCAT('%', #{username}, '%')
         </if>
@@ -24,13 +27,15 @@
     </select>
 
     <select id="listOnline" resultType="map">
-        SELECT s.session_id AS sessionId, s.user_id AS userId, s.username, u.nickname,
+        SELECT s.session_id AS sessionId, s.app_id AS appId, a.app_name AS appName,
+               s.user_id AS userId, s.username, u.nickname,
                o.org_name AS orgName, s.ip_address AS ipAddress, s.location, s.browser, s.os,
                s.login_at AS loginAt, s.last_active_at AS lastActiveAt,
                TIMESTAMPDIFF(SECOND, s.login_at, CURRENT_TIMESTAMP(3)) AS onlineDurationSeconds
         FROM sys_user_session s
         JOIN sys_user u ON u.id = s.user_id AND u.deleted = 0
         LEFT JOIN sys_org o ON o.id = u.org_id AND o.deleted = 0
+        LEFT JOIN sys_app a ON a.app_id = s.app_id AND a.deleted = 0
         <where>
             <include refid="onlineConditions"/>
         </where>

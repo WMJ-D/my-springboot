@@ -5,29 +5,31 @@
 <mapper namespace="com.example.test.mapper.SysMenuMapper">
 
     <select id="list" resultType="map">
-        SELECT id, parent_id AS parentId, menu_name AS menuName, menu_type AS menuType,
-               path, component, route_name AS routeName, permission, icon, sort_order AS sort,
-               visible, status, keep_alive AS keepAlive, external_link AS externalLink,
-               remark, created_at AS createdAt, created_at AS createTime
-        FROM sys_menu
+        SELECT m.id, m.parent_id AS parentId, m.app_id AS appId, a.app_name AS appName,
+               m.menu_name AS menuName, m.menu_type AS menuType,
+               m.path, m.component, m.route_name AS routeName, m.permission, m.icon, m.sort_order AS sort,
+               m.visible, m.status, m.keep_alive AS keepAlive, m.external_link AS externalLink,
+               m.remark, m.created_at AS createdAt, m.created_at AS createTime
+        FROM sys_menu m
+        LEFT JOIN sys_app a ON a.app_id = m.app_id AND a.deleted = 0
         <where>
-            deleted = 0
+            m.deleted = 0
             <if test="menuName != null and menuName != ''">
-                AND menu_name LIKE CONCAT('%', #{menuName}, '%')
+                AND m.menu_name LIKE CONCAT('%', #{menuName}, '%')
             </if>
             <if test="status != null">
-                AND status = #{status}
+                AND m.status = #{status}
             </if>
         </where>
-        ORDER BY sort_order, id
+        ORDER BY m.sort_order, m.id
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sys_menu
-        (parent_id, menu_name, menu_type, path, component, route_name, permission, icon,
+        (parent_id, app_id, menu_name, menu_type, path, component, route_name, permission, icon,
          sort_order, visible, status, keep_alive, external_link, remark, created_by, updated_by)
         VALUES
-        (#{parentId}, #{menuName}, #{menuType}, #{path}, #{component}, #{routeName}, #{permission}, #{icon},
+        (#{parentId}, #{appId}, #{menuName}, #{menuType}, #{path}, #{component}, #{routeName}, #{permission}, #{icon},
          #{sort}, #{visible}, #{status}, #{keepAlive}, #{externalLink}, #{remark}, #{createdBy}, #{updatedBy})
     </insert>
 

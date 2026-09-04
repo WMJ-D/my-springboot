@@ -5,49 +5,56 @@
 <mapper namespace="com.example.test.mapper.SysLoginLogMapper">
 
     <sql id="loginConditions">
-        deleted = 0
+        l.deleted = 0
+        <if test="appId != null and appId != ''">
+            AND l.app_id = #{appId}
+        </if>
         <if test="username != null and username != ''">
-            AND username LIKE CONCAT('%', #{username}, '%')
+            AND l.username LIKE CONCAT('%', #{username}, '%')
         </if>
         <if test="ipAddress != null and ipAddress != ''">
-            AND ip_address LIKE CONCAT('%', #{ipAddress}, '%')
+            AND l.ip_address LIKE CONCAT('%', #{ipAddress}, '%')
         </if>
         <if test="status != null">
-            AND status = #{status}
+            AND l.status = #{status}
         </if>
         <if test="startTime != null and startTime != ''">
-            AND login_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
+            AND l.login_at &gt;= CONCAT(#{startTime}, ' 00:00:00')
         </if>
         <if test="endTime != null and endTime != ''">
-            AND login_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
+            AND l.login_at &lt; DATE_ADD(#{endTime}, INTERVAL 1 DAY)
         </if>
     </sql>
 
     <select id="count" resultType="long">
-        SELECT COUNT(*) FROM sys_login_log
+        SELECT COUNT(*) FROM sys_login_log l
         <where>
             <include refid="loginConditions"/>
         </where>
     </select>
 
     <select id="list" resultType="map">
-        SELECT id, username, ip_address AS ipAddress, location, browser, os,
-               login_type AS loginType, status, message, login_at AS loginAt
-        FROM sys_login_log
+        SELECT l.id, l.app_id AS appId, a.app_name AS appName, l.username,
+               l.ip_address AS ipAddress, l.location, l.browser, l.os,
+               l.login_type AS loginType, l.status, l.message, l.login_at AS loginAt
+        FROM sys_login_log l
+        LEFT JOIN sys_app a ON a.app_id = l.app_id AND a.deleted = 0
         <where>
             <include refid="loginConditions"/>
         </where>
-        ORDER BY login_at DESC
+        ORDER BY l.login_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="export" resultType="map">
-        SELECT username, ip_address, location, browser, os, status, message, login_at
-        FROM sys_login_log
+        SELECT l.app_id AS appId, a.app_name AS appName, l.username, l.ip_address, l.location,
+               l.browser, l.os, l.status, l.message, l.login_at
+        FROM sys_login_log l
+        LEFT JOIN sys_app a ON a.app_id = l.app_id AND a.deleted = 0
         <where>
             <include refid="loginConditions"/>
         </where>
-        ORDER BY login_at DESC
+        ORDER BY l.login_at DESC
         LIMIT 10000
     </select>
 

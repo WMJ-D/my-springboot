@@ -135,7 +135,8 @@ public class OperationLogFilter extends OncePerRequestFilter {
         int status = response.getStatus() < 400 ? 1 : 0;
 
         operationLogMapper.insertLog(
-                traceId, module, meta[0], meta[1] + module, user.userId(), user.username(),
+                traceId, SecurityUtils.getAppId(request), module, meta[0], meta[1] + module,
+                user.userId(), user.username(),
                 method, requestUrl(request), JacksonHolder.toJson(SecurityUtils.maskSensitive(params)),
                 JacksonHolder.toJson(SecurityUtils.maskSensitive(responseResult)),
                 SecurityUtils.getClientIp(request),

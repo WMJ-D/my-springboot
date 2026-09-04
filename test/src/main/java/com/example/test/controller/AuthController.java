@@ -3,6 +3,7 @@ package com.example.test.controller;
 import com.example.test.common.ApiResponse;
 import com.example.test.service.AuthService;
 import com.example.test.security.AuthContext;
+import com.example.test.security.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -43,19 +44,20 @@ public class AuthController {
     }
 
     /**
-     * GET /api/v1/auth/me 当前登录用户信息
+     * GET /api/v1/auth/me 当前登录用户信息（permissions 按请求头 X-App-Id 过滤子系统）
      */
     @GetMapping("/me")
-    public ApiResponse<Map<String, Object>> me() {
-        return ApiResponse.ok(authService.loadIdentity(AuthContext.require().userId()));
+    public ApiResponse<Map<String, Object>> me(HttpServletRequest request) {
+        return ApiResponse.ok(authService.loadIdentity(AuthContext.require().userId(),
+                SecurityUtils.getAppId(request)));
     }
 
     /**
-     * GET /api/v1/auth/menus 当前用户菜单树
+     * GET /api/v1/auth/menus 当前用户菜单树（按请求头 X-App-Id 过滤子系统）
      */
     @GetMapping("/menus")
-    public ApiResponse<List<Map<String, Object>>> menus() {
-        return ApiResponse.ok(authService.menus(AuthContext.require()));
+    public ApiResponse<List<Map<String, Object>>> menus(HttpServletRequest request) {
+        return ApiResponse.ok(authService.menus(AuthContext.require(), SecurityUtils.getAppId(request)));
     }
 
     /**

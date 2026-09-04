@@ -41,6 +41,7 @@ public class OperationLogController {
     @RequirePermission("log:operation:list")
     public ApiResponse<PageResult<Map<String, Object>>> list(@RequestParam(required = false) Integer pageNum,
                                                              @RequestParam(required = false) Integer pageSize,
+                                                             @RequestParam(required = false) String appId,
                                                              @RequestParam(required = false) String module,
                                                              @RequestParam(required = false) String operator,
                                                              @RequestParam(required = false) String operatorUsername,
@@ -51,7 +52,7 @@ public class OperationLogController {
                                                              @RequestParam(required = false) String startDate,
                                                              @RequestParam(required = false) String endDate) {
         String[] range = QueryUtils.parseDateRange(dateRange, startDate, endDate);
-        return ApiResponse.ok(operationLogService.list(PageQuery.of(pageNum, pageSize), module,
+        return ApiResponse.ok(operationLogService.list(PageQuery.of(pageNum, pageSize), appId, module,
                 operator != null && !operator.isBlank() ? operator : operatorUsername,
                 QueryUtils.resolveOperationType(type, operationType),
                 QueryUtils.parseStatus(status), range[0], range[1]));
@@ -73,6 +74,7 @@ public class OperationLogController {
     @GetMapping("/export")
     @RequirePermission("log:operation:export")
     public void export(HttpServletResponse response,
+                       @RequestParam(required = false) String appId,
                        @RequestParam(required = false) String module,
                        @RequestParam(required = false) String operator,
                        @RequestParam(required = false) String operatorUsername,
@@ -83,12 +85,13 @@ public class OperationLogController {
                        @RequestParam(required = false) String startDate,
                        @RequestParam(required = false) String endDate) throws IOException {
         String[] range = QueryUtils.parseDateRange(dateRange, startDate, endDate);
-        List<Map<String, Object>> rows = operationLogService.export(module,
+        List<Map<String, Object>> rows = operationLogService.export(appId, module,
                 operator != null && !operator.isBlank() ? operator : operatorUsername,
                 QueryUtils.resolveOperationType(type, operationType),
                 QueryUtils.parseStatus(status), range[0], range[1]);
         List<CsvColumn> columns = List.of(
-                new CsvColumn("module", "操作模块"), new CsvColumn("type", "操作类型"),
+                new CsvColumn("appName", "所属系统"), new CsvColumn("module", "操作模块"),
+                new CsvColumn("type", "操作类型"),
                 new CsvColumn("description", "操作描述"), new CsvColumn("operator", "操作人"),
                 new CsvColumn("request_url", "请求地址"), new CsvColumn("request_params", "请求参数"),
                 new CsvColumn("response_result", "响应结果"), new CsvColumn("ip", "操作IP"),

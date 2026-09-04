@@ -47,6 +47,7 @@ public class AuthService {
             throw new AppException(429, "登录尝试过于频繁，请稍后再试", "TOO_MANY_ATTEMPTS");
         }
         String ip = SecurityUtils.getClientIp(request);
+        String appId = SecurityUtils.getAppId(request);
         String userAgent = request.getHeader("User-Agent") == null ? "" : request.getHeader("User-Agent");
         String[] browserOs = SecurityUtils.parseUserAgent(userAgent);
 
@@ -57,22 +58,22 @@ public class AuthService {
                 && PasswordUtil.verify(password, String.valueOf(user.get("password_hash")));
         if (!valid) {
             Long userId = user == null ? null : toLong(user.get("id"));
-            writeLoginLog(userId, username, 0, "用户名、密码错误或账号已禁用", ip, browserOs, userAgent);
+            writeLoginLog(userId, username, 0, "用户名、密码错误或账号已禁用", ip, browserOs, userAgent, appId);
             throw new AppException(401, "用户名、密码错误或账号已禁用", "LOGIN_FAILED");
         }
 
         long userId = toLong(user.get("id"));
-        Map<String, Object> identity = loadIdentity(userId);
+        Map<String, Object> identity = loadIdentity(userId, appId);
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> roles = (List<Map<String, Object>>) identity.get("roles");
         List<String> roleKeys = roles.stream().map(role -> String.valueOf(role.get("roleKey"))).toList();
 
         String sessionId = UUID.randomUUID().toString();
         String token = jwtTokenProvider.createToken(userId, username, roleKeys, sessionId);
-        sessionMapper.insertSession(sessionId, userId, username, ip, browserOs[0], browserOs[1], userAgent,
+        sessionMapper.insertSession(sessionId, appId, userId, username, ip, browserOs[0], browserOs[1], userAgent,
                 LocalDateTime.now().plusSeconds(jwtTokenProvider.getExpiresInSeconds()));
         authMapper.touchLastLogin(userId, ip);
-        writeLoginLog(userId, username, 1, "登录成功", ip, browserOs, userAgent);
+        writeLoginLog(userId, username, 1, "登录成功", ip, browserOs, userAgent, appId);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("token", token);
@@ -83,26 +84,26 @@ public class AuthService {
     }
 
     /**
-     * 加载用户身份：基础信息 + 角色 + 权限标识
+     * 加载用户身份：基础信息 + 角色 + 权限标识（permissions 按子系统过滤，appId 为 null 时不过滤）
      */
-    public Map<String, Object> loadIdentity(long userId) {
+    public Map<String, Object> loadIdentity(long userId, String appId) {
         Map<String, Object> user = authMapper.findIdentityUser(userId);
         if (user == null || toLong(user.get("status")) != 1) {
             throw new AppException(401, "用户不存在或已禁用", "USER_DISABLED");
         }
         Map<String, Object> identity = new LinkedHashMap<>(user);
         identity.put("roles", authMapper.findRoles(userId));
-        identity.put("permissions", authMapper.findPermissions(userId));
+        identity.put("permissions", authMapper.findPermissions(userId, appId));
         return identity;
     }
 
     /**
-     * 当前用户菜单树
+     * 当前用户菜单树（按请求头 X-App-Id 过滤子系统，NULL 菜单对所有系统可见）
      */
-    public List<Map<String, Object>> menus(CurrentUser user) {
+    public List<Map<String, Object>> menus(CurrentUser user, String appId) {
         List<Map<String, Object>> rows = user.isAdmin()
-                ? authMapper.findAdminMenus()
-                : authMapper.findUserMenus(user.userId());
+                ? authMapper.findAdminMenus(appId)
+                : authMapper.findUserMenus(user.userId(), appId);
         return com.example.test.common.TreeBuilder.buildTree(rows, "parentId");
     }
 
@@ -115,8 +116,8 @@ public class AuthService {
     }
 
     private void writeLoginLog(Long userId, String username, int status, String message,
-                               String ip, String[] browserOs, String userAgent) {
-        loginLogMapper.insertLog(userId, username, ip, browserOs[0], browserOs[1], userAgent, status, message);
+                               String ip, String[] browserOs, String userAgent, String appId) {
+        loginLogMapper.insertLog(userId, appId, username, ip, browserOs[0], browserOs[1], userAgent, status, message);
     }
 
     private long toLong(Object value) {

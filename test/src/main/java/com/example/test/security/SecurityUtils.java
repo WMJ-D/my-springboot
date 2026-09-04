@@ -33,6 +33,14 @@ public final class SecurityUtils {
     }
 
     /**
+     * 获取请求头中的子系统标识（X-App-Id），无则返回 null
+     */
+    public static String getAppId(HttpServletRequest request) {
+        String appId = request.getHeader("X-App-Id");
+        return appId == null || appId.isBlank() ? null : appId.trim();
+    }
+
+    /**
      * 解析 User-Agent 中的浏览器与操作系统
      */
     public static String[] parseUserAgent(String userAgent) {

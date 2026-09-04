@@ -10,6 +10,7 @@ import java.util.Map;
 
 /**
  * 菜单管理，对应 Express 侧 routes/system.js 的菜单相关 SQL
+ * <p>多子系统架构：菜单通过 app_id 关联子系统（NULL 为所有系统可见）</p>
  */
 @Mapper
 public interface SysMenuMapper {
@@ -22,17 +23,17 @@ public interface SysMenuMapper {
     int insert(Map<String, Object> params);
 
     @Update("""
-            UPDATE sys_menu SET parent_id=#{parentId}, menu_name=#{menuName}, menu_type=#{menuType}, path=#{path},
+            UPDATE sys_menu SET parent_id=#{parentId}, app_id=#{appId}, menu_name=#{menuName}, menu_type=#{menuType}, path=#{path},
                    component=#{component}, route_name=#{routeName}, permission=#{permission}, icon=#{icon},
                    sort_order=#{sort}, visible=#{visible}, status=#{status}, keep_alive=#{keepAlive},
                    external_link=#{externalLink}, remark=#{remark}, updated_by=#{updatedBy}
             WHERE id=#{id} AND deleted=0
             """)
-    int update(@Param("parentId") Long parentId, @Param("menuName") String menuName, @Param("menuType") String menuType,
-               @Param("path") String path, @Param("component") String component, @Param("routeName") String routeName,
-               @Param("permission") String permission, @Param("icon") String icon, @Param("sort") int sort,
-               @Param("visible") int visible, @Param("status") int status, @Param("keepAlive") int keepAlive,
-               @Param("externalLink") int externalLink, @Param("remark") String remark,
+    int update(@Param("parentId") Long parentId, @Param("appId") String appId, @Param("menuName") String menuName,
+               @Param("menuType") String menuType, @Param("path") String path, @Param("component") String component,
+               @Param("routeName") String routeName, @Param("permission") String permission, @Param("icon") String icon,
+               @Param("sort") int sort, @Param("visible") int visible, @Param("status") int status,
+               @Param("keepAlive") int keepAlive, @Param("externalLink") int externalLink, @Param("remark") String remark,
                @Param("updatedBy") long updatedBy, @Param("id") long id);
 
     @Select("SELECT id FROM sys_menu WHERE parent_id=#{id} AND deleted=0 LIMIT 1")

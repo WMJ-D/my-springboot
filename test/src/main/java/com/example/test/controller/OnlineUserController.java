@@ -40,10 +40,11 @@ public class OnlineUserController {
     @RequirePermission("log:online:list")
     public ApiResponse<PageResult<Map<String, Object>>> list(@RequestParam(required = false) Integer pageNum,
                                                              @RequestParam(required = false) Integer pageSize,
+                                                             @RequestParam(required = false) String appId,
                                                              @RequestParam(required = false) String username,
                                                              @RequestParam(required = false) String ip,
                                                              @RequestParam(required = false) String ipAddress) {
-        return ApiResponse.ok(onlineUserService.list(PageQuery.of(pageNum, pageSize), username,
+        return ApiResponse.ok(onlineUserService.list(PageQuery.of(pageNum, pageSize), appId, username,
                 ip != null && !ip.isBlank() ? ip : ipAddress, AuthContext.require()));
     }
 

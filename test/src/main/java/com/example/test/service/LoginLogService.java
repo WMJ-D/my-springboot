@@ -21,10 +21,10 @@ public class LoginLogService {
         this.loginLogMapper = loginLogMapper;
     }
 
-    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String username, String ipAddress,
+    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String appId, String username, String ipAddress,
                                                 Integer status, String startTime, String endTime) {
-        long total = loginLogMapper.count(username, ipAddress, status, startTime, endTime);
-        List<Map<String, Object>> rows = loginLogMapper.list(username, ipAddress, status, startTime, endTime,
+        long total = loginLogMapper.count(appId, username, ipAddress, status, startTime, endTime);
+        List<Map<String, Object>> rows = loginLogMapper.list(appId, username, ipAddress, status, startTime, endTime,
                 pageQuery.getPageSize(), pageQuery.getOffset());
         return new PageResult<>(rows.stream().map(LoginLogService::transform).toList(),
                 total, pageQuery.getPageNum(), pageQuery.getPageSize());
@@ -34,9 +34,9 @@ public class LoginLogService {
         loginLogMapper.deleteByIds(ids);
     }
 
-    public List<Map<String, Object>> export(String username, String ipAddress, Integer status,
+    public List<Map<String, Object>> export(String appId, String username, String ipAddress, Integer status,
                                             String startTime, String endTime) {
-        List<Map<String, Object>> rows = loginLogMapper.export(username, ipAddress, status, startTime, endTime);
+        List<Map<String, Object>> rows = loginLogMapper.export(appId, username, ipAddress, status, startTime, endTime);
         return rows.stream().map(row -> {
             Map<String, Object> item = new LinkedHashMap<>(row);
             item.put("statusText", asInt(row.get("status")) == 1 ? "成功" : "失败");

@@ -11,6 +11,7 @@ import java.util.Map;
 
 /**
  * 菜单管理服务，对应 Express 侧 routes/system.js 的菜单部分
+ * <p>多子系统架构：菜单通过 appId 关联子系统（null 为所有系统可见）</p>
  */
 @Service
 public class MenuService {
@@ -35,8 +36,8 @@ public class MenuService {
         if (input.parentId() != null && input.parentId() == id) {
             throw new AppException(400, "上级菜单不能是自身");
         }
-        int affected = menuMapper.update(input.parentId(), input.menuName(), input.menuType(), input.path(),
-                input.component(), input.routeName(), input.permission(), input.icon(),
+        int affected = menuMapper.update(input.parentId(), input.appId(), input.menuName(), input.menuType(),
+                input.path(), input.component(), input.routeName(), input.permission(), input.icon(),
                 input.sort() == null ? 0 : input.sort(),
                 input.visible() == null ? 1 : input.visible(),
                 input.status() == null ? 1 : input.status(),
@@ -58,6 +59,7 @@ public class MenuService {
     private Map<String, Object> buildParams(MenuInput input, long actorId) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("parentId", input.parentId());
+        params.put("appId", input.appId());
         params.put("menuName", input.menuName());
         params.put("menuType", input.menuType());
         params.put("path", input.path());
@@ -76,8 +78,8 @@ public class MenuService {
         return params;
     }
 
-    public record MenuInput(Long parentId, String menuName, String menuType, String path, String component,
-                            String routeName, String permission, String icon, Integer sort, Integer visible,
-                            Integer status, Integer keepAlive, Integer externalLink, String remark) {
+    public record MenuInput(Long parentId, String appId, String menuName, String menuType, String path,
+                            String component, String routeName, String permission, String icon, Integer sort,
+                            Integer visible, Integer status, Integer keepAlive, Integer externalLink, String remark) {
     }
 }

@@ -43,18 +43,23 @@ public interface AuthMapper {
     List<Map<String, Object>> findRoles(@Param("userId") long userId);
 
     /**
-     * 用户全部权限标识
+     * 用户全部权限标识（按子系统过滤：app_id 为 NULL 的菜单对所有系统生效）
      */
     @Select("""
+            <script>
             SELECT DISTINCT m.permission
             FROM sys_user_role ur
             JOIN sys_role r ON r.id=ur.role_id AND r.status=1 AND r.deleted=0
             JOIN sys_role_menu rm ON rm.role_id=r.id
             JOIN sys_menu m ON m.id=rm.menu_id AND m.status=1 AND m.deleted=0
             WHERE ur.user_id=#{userId} AND m.permission IS NOT NULL
+              <if test="appId != null and appId != ''">
+                AND (m.app_id IS NULL OR m.app_id=#{appId})
+              </if>
             ORDER BY m.permission
+            </script>
             """)
-    List<String> findPermissions(@Param("userId") long userId);
+    List<String> findPermissions(@Param("userId") long userId, @Param("appId") String appId);
 
     /**
      * 登录成功后更新最后登录信息
@@ -63,23 +68,29 @@ public interface AuthMapper {
     int touchLastLogin(@Param("userId") long userId, @Param("ip") String ip);
 
     /**
-     * 管理员可见菜单（全部非按钮菜单）
+     * 管理员可见菜单（全部非按钮菜单，按子系统过滤：NULL 为所有系统可见）
      */
     @Select("""
+            <script>
             SELECT DISTINCT m.id, m.parent_id AS parentId, m.menu_name AS menuName, m.menu_type AS menuType,
                    m.path, m.component, m.route_name AS routeName, m.permission, m.icon, m.sort_order AS sort,
                    m.visible, m.status, m.keep_alive AS keepAlive, m.external_link AS externalLink,
                    m.remark, m.created_at AS createdAt
             FROM sys_menu m
-            WHERE m.deleted=0 AND m.status=1 AND m.visible=1 AND m.menu_type<>'F'
+            WHERE m.deleted=0 AND m.status=1 AND m.visible=1 AND m.menu_type&lt;&gt;'F'
+              <if test="appId != null and appId != ''">
+                AND (m.app_id IS NULL OR m.app_id=#{appId})
+              </if>
             ORDER BY m.sort_order, m.id
+            </script>
             """)
-    List<Map<String, Object>> findAdminMenus();
+    List<Map<String, Object>> findAdminMenus(@Param("appId") String appId);
 
     /**
-     * 普通用户可见菜单（按角色过滤）
+     * 普通用户可见菜单（按角色过滤，按子系统过滤：NULL 为所有系统可见）
      */
     @Select("""
+            <script>
             SELECT DISTINCT m.id, m.parent_id AS parentId, m.menu_name AS menuName, m.menu_type AS menuType,
                    m.path, m.component, m.route_name AS routeName, m.permission, m.icon, m.sort_order AS sort,
                    m.visible, m.status, m.keep_alive AS keepAlive, m.external_link AS externalLink,
@@ -88,8 +99,12 @@ public interface AuthMapper {
             JOIN sys_role r ON r.id=ur.role_id AND r.status=1 AND r.deleted=0
             JOIN sys_role_menu rm ON rm.role_id=r.id
             JOIN sys_menu m ON m.id=rm.menu_id
-            WHERE ur.user_id=#{userId} AND m.deleted=0 AND m.status=1 AND m.visible=1 AND m.menu_type<>'F'
+            WHERE ur.user_id=#{userId} AND m.deleted=0 AND m.status=1 AND m.visible=1 AND m.menu_type&lt;&gt;'F'
+              <if test="appId != null and appId != ''">
+                AND (m.app_id IS NULL OR m.app_id=#{appId})
+              </if>
             ORDER BY m.sort_order, m.id
+            </script>
             """)
-    List<Map<String, Object>> findUserMenus(@Param("userId") long userId);
+    List<Map<String, Object>> findUserMenus(@Param("userId") long userId, @Param("appId") String appId);
 }

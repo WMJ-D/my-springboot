@@ -28,10 +28,10 @@ public class OnlineUserService {
         this.sessionMapper = sessionMapper;
     }
 
-    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String username, String ipAddress,
-                                                CurrentUser currentUser) {
-        long total = sessionMapper.countOnline(username, ipAddress);
-        List<Map<String, Object>> rows = sessionMapper.listOnline(username, ipAddress,
+    public PageResult<Map<String, Object>> list(PageQuery pageQuery, String appId, String username,
+                                                String ipAddress, CurrentUser currentUser) {
+        long total = sessionMapper.countOnline(appId, username, ipAddress);
+        List<Map<String, Object>> rows = sessionMapper.listOnline(appId, username, ipAddress,
                 pageQuery.getPageSize(), pageQuery.getOffset());
         List<Map<String, Object>> list = rows.stream().map(row -> {
             Map<String, Object> item = new LinkedHashMap<>(row);
