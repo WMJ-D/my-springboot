@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.test.mapper.SysFileUploadMapper">
+
+    <insert id="insertSession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_file_upload
+        (upload_key, app_id, file_name, file_size, content_type, chunk_size, total_chunks,
+         uploader_id, uploader_username)
+        VALUES
+        (#{uploadKey}, #{appId}, #{fileName}, #{fileSize}, #{contentType}, #{chunkSize}, #{totalChunks},
+         #{uploaderId}, #{uploaderUsername})
+    </insert>
+
+    <select id="listChunkIndexes" resultType="int">
+        SELECT chunk_index FROM sys_file_chunk WHERE upload_id = #{uploadId} ORDER BY chunk_index
+    </select>
+
+    <insert id="insertChunkIgnore">
+        INSERT IGNORE INTO sys_file_chunk (upload_id, chunk_index, chunk_size)
+        VALUES (#{uploadId}, #{chunkIndex}, #{chunkSize})
+    </insert>
+
+    <select id="countChunks" resultType="long">
+        SELECT COUNT(*) FROM sys_file_chunk WHERE upload_id = #{uploadId}
+    </select>
+
+    <update id="finishSession">
+        UPDATE sys_file_upload SET status = 1, file_id = #{fileId}
+        WHERE id = #{id} AND status = 0
+    </update>
+
+    <delete id="deleteChunks">
+        DELETE FROM sys_file_chunk WHERE upload_id = #{uploadId}
+    </delete>
+
+</mapper>
